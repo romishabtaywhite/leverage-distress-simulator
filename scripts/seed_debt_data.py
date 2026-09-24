@@ -57,6 +57,8 @@ def seed_diebold_debt_tranches(conn, company_id):
     and FY2023 10-Q debt footnotes. Balances are in USD millions in the
     source filings - converted to raw dollars here for schema consistency.
     """
+    conn.execute("DELETE FROM debt_tranches WHERE company_id = ?", (company_id,))
+
     tranches = [
         {
             "tranche_name": "2022 Term Loan A Facility",
@@ -158,6 +160,8 @@ def seed_diebold_covenants(conn, company_id):
     dates below are my best reconstruction. Verify against the actual filed
     credit agreement amendment before treating these as exact.
     """
+    conn.execute("DELETE FROM covenant_terms WHERE company_id = ?", (company_id,))
+
     covenants = [
         # Interest coverage ratio (minimum) - stepping UP over time (less lenient)
         {"covenant_type": "interest_coverage", "threshold_value": 1.5, "effective_date": "2021-06-30", "expiry_date": "2021-12-30"},
@@ -180,6 +184,86 @@ def seed_diebold_covenants(conn, company_id):
     print(f"Inserted {len(covenants)} covenant terms for company_id={company_id}")
 
 
+def seed_bhc_debt_tranches(conn, company_id):
+    """
+    Real disclosed tranches for Bausch Health Companies Inc. (BHC, parent
+    entity only), transcribed from its FY2025/FY2026 10-Q and 10-K debt
+    footnotes (CIK 0000885590). IMPORTANT: Bausch + Lomb Corporation is a
+    separate, ~52.5%-owned, SEPARATELY SEC-reporting subsidiary with its own
+    distinct credit facilities (its own "2030 Term Loan B", its own "2030
+    Revolving Credit Facility", etc). Those are intentionally NOT included
+    here - do not merge B+L's numbers into BHC's capital structure, they are
+    two different companies with two different cap tables.
+
+    No maintenance financial covenant (leverage/coverage ratio tested each
+    quarter) was found in what was researched - plausible, since many
+    current-market Term Loan B facilities are covenant-lite. Verify directly
+    in the credit agreement before assuming there is or isn't one.
+    """
+    conn.execute("DELETE FROM debt_tranches WHERE company_id = ?", (company_id,))
+
+    tranches = [
+        {
+            "tranche_name": "2030 Revolving Credit Facility",
+            "tranche_type": "revolver",
+            "rate_type": "floating",
+            "reference_rate": "SOFR",
+            "spread_bps": None,  # applicable rate for SOFR draws not fully confirmed - verify in 10-K
+            "rate_floor_pct": 0.0,
+            "fixed_rate_pct": None,
+            "original_balance": 500_000_000,
+            "as_of_date": "2025-04-08",
+            "maturity_date": "2030-04-08",
+            "seniority_rank": 1,
+            "source_accession": "BHC 8-K filed 2025-04-09 and FY2026 10-Q, CIK 0000885590",
+        },
+        {
+            "tranche_name": "2030 Term Loan B Facility",
+            "tranche_type": "term_loan",
+            "rate_type": "floating",
+            "reference_rate": "SOFR",
+            "spread_bps": 625,  # confirmed: Applicable Rate 6.25% for SOFR borrowings, 5.25% for ABR
+            "rate_floor_pct": 0.0,
+            "fixed_rate_pct": None,
+            "original_balance": 3_000_000_000,
+            "as_of_date": "2025-04-08",
+            "maturity_date": "2030-10-08",
+            "seniority_rank": 1,
+            "source_accession": "BHC FY2026 10-Q (quarter ended Mar 31 2026), CIK 0000885590",
+        },
+        {
+            "tranche_name": "2032 Senior Secured Notes",
+            "tranche_type": "senior_notes",
+            "rate_type": "fixed",
+            "reference_rate": None,
+            "spread_bps": None,
+            "rate_floor_pct": None,
+            "fixed_rate_pct": 10.0,
+            "original_balance": 6_000_000_000,  # $4,400M (Apr 2025) + $1,600M folded in via Dec 2025 exchange
+            "as_of_date": "2025-12-26",
+            "maturity_date": "2032-04-15",
+            "seniority_rank": 2,  # simplifying assumption: ranks behind revolver/TLB in the model's cash sweep - verify actual priority
+            "source_accession": "BHC 8-K filed 2025-04-09; FY2025 10-K re: December 2025 Exchange, CIK 0000885590",
+        },
+    ]
+
+    for t in tranches:
+        conn.execute(
+            """INSERT INTO debt_tranches
+               (company_id, tranche_name, tranche_type, rate_type, reference_rate,
+                spread_bps, rate_floor_pct, fixed_rate_pct, original_balance,
+                as_of_date, maturity_date, seniority_rank, source_accession)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                company_id, t["tranche_name"], t["tranche_type"], t["rate_type"],
+                t["reference_rate"], t["spread_bps"], t["rate_floor_pct"], t["fixed_rate_pct"],
+                t["original_balance"], t["as_of_date"], t["maturity_date"],
+                t["seniority_rank"], t["source_accession"],
+            ),
+        )
+    print(f"Inserted {len(tranches)} debt tranches for company_id={company_id}")
+
+
 if __name__ == "__main__":
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -187,9 +271,11 @@ if __name__ == "__main__":
     ids = seed_companies(conn)
     seed_diebold_debt_tranches(conn, ids["DBD"])
     seed_diebold_covenants(conn, ids["DBD"])
+    seed_bhc_debt_tranches(conn, ids["BHC"])
 
     conn.commit()
     conn.close()
-    print("\nDone. Diebold Nixdorf now has real, worked debt tranche + covenant data.")
-    print("Bausch Health, Community Health Systems, and Party City are seeded as companies")
-    print("only - research and add their debt_tranches/covenant_terms rows the same way.")
+    print("\nDone. Diebold Nixdorf and Bausch Health now have real, worked debt tranche data")
+    print("(Diebold also has a covenant schedule; BHC appears covenant-lite - verify).")
+    print("Community Health Systems and Party City are seeded as companies only - research")
+    print("and add their debt_tranches/covenant_terms rows the same way.")
