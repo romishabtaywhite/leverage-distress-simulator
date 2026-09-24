@@ -1,50 +1,50 @@
 """
-Starting shortlist of real, publicly-filing companies worth researching as
-case studies. All are picked because they are (a) public SEC filers, so
-their debt footnotes are pullable via EDGAR, and (b) carried meaningful
-leveraged/floating-rate debt through the 2022-2024 rate cycle.
-
-IMPORTANT: verify current facts yourself before relying on these - filing
-status, debt structure, and distress outcomes can change, and this list is
-a research starting point, not a verified dataset. Confirm each company's
-actual debt footnote (10-K, "Debt" or "Long-Term Debt" note) before treating
-any tranche detail as fact.
-
-Add your own as you research using EDGAR full-text search:
-https://www.sec.gov/edgar/search/  -- try phrases like "Term Loan B" AND "SOFR"
-combined with a sector/date filter to find more candidates.
+Finalized case-study companies, with CIKs verified directly against real SEC
+filings (not guessed). Two "recovered/failed" distress cases and two
+"currently levered, hasn't defaulted" comparison cases.
 """
 
 CANDIDATES = [
     {
-        "ticker": "PRTYQ",  # Party City Holdco - ticker changed post-Chapter 11 (Jan 2023)
-        "name": "Party City Holdco Inc.",
-        "notes": "Filed Chapter 11 Jan 2023. Good real example of a public company "
-                 "with disclosed floating-rate term loan debt and a documented distress event.",
-    },
-    {
         "ticker": "DBD",
-        "name": "Diebold Nixdorf Inc.",
-        "notes": "Restructured in 2023 (Chapter 11 in the US, scheme of arrangement in the UK). "
-                 "Heavily levered industrial/tech company, useful non-PE-sponsor comparison case.",
+        "name": "Diebold Nixdorf, Incorporated",
+        "cik": "0000028823",
+        "is_distressed": 1,
+        "distress_date": "2023-06-01",  # approximate - filed Chapter 11 June 2023
+        "notes": "Filed Chapter 11 June 2023, successfully reorganized, still trades as DBD. "
+                 "Real disclosed floating-rate Term Loan A/B facilities (LIBOR + spread) and a "
+                 "leverage-ratio/interest-coverage covenant step schedule pre-filing - excellent "
+                 "worked example of exactly the covenant mechanics this project models. "
+                 "A 'survived distress' case, useful contrast against Party City.",
     },
     {
         "ticker": "BHC",
         "name": "Bausch Health Companies Inc.",
-        "notes": "Highly levered post-Valeant, large floating-rate term loan exposure, "
-                 "faced credit stress through the rate-hike period. Verify current status.",
+        "cik": "0000885590",
+        "is_distressed": 0,
+        "distress_date": None,
+        "notes": "Heavily levered (post-Valeant), still operating and current-filing as of 2026. "
+                 "Has NOT defaulted - useful as a 'high leverage, still standing' comparison case. "
+                 "Verify current debt footnote details yourself before use.",
     },
     {
         "ticker": "CYH",
-        "name": "Community Health Systems Inc.",
-        "notes": "Heavily levered hospital operator with disclosed floating-rate term loan "
-                 "facilities. Useful for a healthcare-sector comparison.",
+        "name": "Community Health Systems, Inc.",
+        "cik": "0001108109",
+        "is_distressed": 0,
+        "distress_date": None,
+        "notes": "Heavily levered hospital operator, ~$11.4B debt as of late 2024, still operating. "
+                 "Good healthcare-sector comparison case. Verify current figures before use.",
     },
     {
-        "ticker": "AAPL",
-        "name": "Apple Inc.",
-        "notes": "NOT a leverage case study - included only as a low-leverage 'control' "
-                 "company if you want a contrast case, and as the smoke-test ticker in "
-                 "edgar_client.py.",
+        "ticker": "PRTYQ",
+        "name": "Party City Holdco Inc.",
+        "cik": "0001592058",
+        "is_distressed": 1,
+        "distress_date": "2024-12-21",  # second Chapter 11 filing, led to full liquidation
+        "notes": "Filed Chapter 11 twice (Jan 2023, then again Dec 2024). Fully liquidated in 2025 "
+                 "after the second filing failed to produce a turnaround. Use PRE-first-bankruptcy "
+                 "10-K debt footnotes (e.g. FY2021/FY2022 filings) as the simulation input, paired "
+                 "with the confirmed eventual-liquidation outcome as a clean distress label.",
     },
 ]
