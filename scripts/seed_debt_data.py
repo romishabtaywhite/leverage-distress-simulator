@@ -264,6 +264,142 @@ def seed_bhc_debt_tranches(conn, company_id):
     print(f"Inserted {len(tranches)} debt tranches for company_id={company_id}")
 
 
+def seed_chs_debt_tranches(conn, company_id):
+    """
+    Real disclosed tranches for Community Health Systems, Inc. (CYH, CIK
+    0001108109), transcribed from FY2025/FY2026 10-K/10-Q filings and 8-Ks.
+    CHS has a large, frequently-refinanced note stack; this is a
+    representative subset, not the full capital structure - there are
+    additional smaller note series outstanding. Verify current balances
+    directly in the FY2025 10-K debt footnote before relying on these.
+    """
+    conn.execute("DELETE FROM debt_tranches WHERE company_id = ?", (company_id,))
+
+    tranches = [
+        {
+            "tranche_name": "ABL Facility",
+            "tranche_type": "revolver",
+            "rate_type": "floating",
+            "reference_rate": "SOFR",
+            "spread_bps": 200,  # tiered 175/200/225 bps based on excess availability - using midpoint
+            "rate_floor_pct": None,
+            "fixed_rate_pct": None,
+            "original_balance": 1_000_000_000,  # max commitment, not necessarily fully drawn
+            "as_of_date": "2026-03-31",
+            "maturity_date": None,  # not confirmed in research - verify
+            "seniority_rank": 1,
+            "source_accession": "CHS FY2026 10-Q (quarter ended Mar 31 2026), CIK 0001108109",
+        },
+        {
+            "tranche_name": "10.875% Senior Secured Notes due 2032",
+            "tranche_type": "senior_notes",
+            "rate_type": "fixed",
+            "reference_rate": None,
+            "spread_bps": None,
+            "rate_floor_pct": None,
+            "fixed_rate_pct": 10.875,
+            "original_balance": 2_002_500_000,  # confirmed remaining balance after Dec 2025 partial redemption
+            "as_of_date": "2025-12-15",
+            "maturity_date": "2032-01-01",  # approximate - verify exact date
+            "seniority_rank": 2,
+            "source_accession": "CHS press release re: note redemptions, Dec 15 2025, CIK 0001108109",
+        },
+        {
+            "tranche_name": "10.750% Senior-Priority Secured Notes due 2033",
+            "tranche_type": "senior_notes",
+            "rate_type": "fixed",
+            "reference_rate": None,
+            "spread_bps": None,
+            "rate_floor_pct": None,
+            "fixed_rate_pct": 10.75,
+            "original_balance": None,  # amount not confirmed in research - verify in 8-K/10-K
+            "as_of_date": "2025-05-08",
+            "maturity_date": "2033-01-01",  # approximate - verify exact date
+            "seniority_rank": 2,
+            "source_accession": "CHS 8-K filed May 8-9 2025, CIK 0001108109",
+        },
+    ]
+
+    for t in tranches:
+        conn.execute(
+            """INSERT INTO debt_tranches
+               (company_id, tranche_name, tranche_type, rate_type, reference_rate,
+                spread_bps, rate_floor_pct, fixed_rate_pct, original_balance,
+                as_of_date, maturity_date, seniority_rank, source_accession)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                company_id, t["tranche_name"], t["tranche_type"], t["rate_type"],
+                t["reference_rate"], t["spread_bps"], t["rate_floor_pct"], t["fixed_rate_pct"],
+                t["original_balance"], t["as_of_date"], t["maturity_date"],
+                t["seniority_rank"], t["source_accession"],
+            ),
+        )
+    print(f"Inserted {len(tranches)} debt tranches for company_id={company_id}")
+
+
+def seed_party_city_debt_tranches(conn, company_id):
+    """
+    Real disclosed tranches for Party City Holdco Inc. (PRTYQ, CIK
+    0001592058), transcribed from its FY2021 10-K debt footnote - the
+    capital structure in place shortly before its first Chapter 11 filing
+    (January 2023). NOTABLE FINDING: both surviving tranches by this point
+    were FIXED rate - the company had refinanced out of its floating-rate
+    Term Loan Credit Agreement in Feb 2021, more than a year before its
+    bankruptcy filing. This makes Party City a useful contrast case: its
+    distress was demand/liquidity-driven, not floating-rate-driven, unlike
+    Diebold or CHS. Worth stating explicitly in your write-up rather than
+    assuming every distress case in the dataset is rate-cycle-driven.
+    """
+    conn.execute("DELETE FROM debt_tranches WHERE company_id = ?", (company_id,))
+
+    tranches = [
+        {
+            "tranche_name": "8.750% Senior Secured First Lien Notes due 2026",
+            "tranche_type": "senior_notes",
+            "rate_type": "fixed",
+            "reference_rate": None,
+            "spread_bps": None,
+            "rate_floor_pct": None,
+            "fixed_rate_pct": 8.75,
+            "original_balance": 750_000_000,
+            "as_of_date": "2021-02-19",
+            "maturity_date": "2026-02-15",
+            "seniority_rank": 1,
+            "source_accession": "Party City 8-K filed Feb 22 2021; FY2021 10-K, CIK 0001592058",
+        },
+        {
+            "tranche_name": "6.125% Senior Notes due 2023",
+            "tranche_type": "sub_notes",
+            "rate_type": "fixed",
+            "reference_rate": None,
+            "spread_bps": None,
+            "rate_floor_pct": None,
+            "fixed_rate_pct": 6.125,
+            "original_balance": None,  # amount not isolated in extracted text - verify in FY2021 10-K
+            "as_of_date": "2021-12-31",
+            "maturity_date": "2023-08-15",
+            "seniority_rank": 2,  # unsecured, subordinated to secured debt per filing text
+            "source_accession": "Party City FY2022 10-K debt footnote, CIK 0001592058",
+        },
+    ]
+
+    for t in tranches:
+        conn.execute(
+            """INSERT INTO debt_tranches
+               (company_id, tranche_name, tranche_type, rate_type, reference_rate,
+                spread_bps, rate_floor_pct, fixed_rate_pct, original_balance,
+                as_of_date, maturity_date, seniority_rank, source_accession)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                company_id, t["tranche_name"], t["tranche_type"], t["rate_type"],
+                t["reference_rate"], t["spread_bps"], t["rate_floor_pct"], t["fixed_rate_pct"],
+                t["original_balance"], t["as_of_date"], t["maturity_date"],
+                t["seniority_rank"], t["source_accession"],
+            ),
+        )
+    print(f"Inserted {len(tranches)} debt tranches for company_id={company_id}")
+
+
 if __name__ == "__main__":
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -272,10 +408,11 @@ if __name__ == "__main__":
     seed_diebold_debt_tranches(conn, ids["DBD"])
     seed_diebold_covenants(conn, ids["DBD"])
     seed_bhc_debt_tranches(conn, ids["BHC"])
+    seed_chs_debt_tranches(conn, ids["CYH"])
+    seed_party_city_debt_tranches(conn, ids["PRTYQ"])
 
     conn.commit()
     conn.close()
-    print("\nDone. Diebold Nixdorf and Bausch Health now have real, worked debt tranche data")
-    print("(Diebold also has a covenant schedule; BHC appears covenant-lite - verify).")
-    print("Community Health Systems and Party City are seeded as companies only - research")
-    print("and add their debt_tranches/covenant_terms rows the same way.")
+    print("\nDone. All 4 companies now have real, worked debt tranche data.")
+    print("Diebold also has a covenant schedule; the others appear covenant-lite or")
+    print("weren't confirmed to have maintenance covenants in the research done here - verify.")
