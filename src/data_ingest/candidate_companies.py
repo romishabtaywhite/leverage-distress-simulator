@@ -10,12 +10,16 @@ CANDIDATES = [
         "name": "Diebold Nixdorf, Incorporated",
         "cik": "0000028823",
         "is_distressed": 1,
-        "distress_date": "2023-06-01",  # approximate - filed Chapter 11 June 2023
-        "notes": "Filed Chapter 11 June 2023, successfully reorganized, still trades as DBD. "
-                 "Real disclosed floating-rate Term Loan A/B facilities (LIBOR + spread) and a "
-                 "leverage-ratio/interest-coverage covenant step schedule pre-filing - excellent "
-                 "worked example of exactly the covenant mechanics this project models. "
-                 "A 'survived distress' case, useful contrast against Party City.",
+        "distress_date": "2023-06-01",  # Chapter 11 filed June 1 2023, emerged Aug 11 2023
+        "notes": "Filed Chapter 11 (+ a parallel Dutch WHOA scheme) June 2023, emerged Aug 2023 - "
+                 "ONE restructuring event, not two. The pre-filing capital structure (LIBOR/EURIBOR "
+                 "term loans, and a covenant schedule that tightened 2021-2022) was entirely "
+                 "extinguished at emergence. It was replaced by a new $1.25B Exit Term Loan Facility "
+                 "priced at SOFR + 7.50%, deliberately structured with NO financial maintenance "
+                 "covenants. Real narrative arc: covenant relief (2021-22) proved insufficient, so "
+                 "lenders eventually did a full debt-for-equity restructuring instead - a more severe "
+                 "form of discipline than a covenant breach. Both the pre- and post-restructuring "
+                 "data are worth keeping, clearly separated, for exactly this contrast.",
     },
     {
         "ticker": "BHC",

@@ -53,82 +53,35 @@ def seed_companies(conn):
 
 def seed_diebold_debt_tranches(conn, company_id):
     """
-    Real disclosed tranches, transcribed from Diebold Nixdorf's FY2021 10-Q
-    and FY2023 10-Q debt footnotes. Balances are in USD millions in the
-    source filings - converted to raw dollars here for schema consistency.
+    Real disclosed CURRENT (post-emergence) tranche for Diebold Nixdorf,
+    transcribed from law-firm summaries of its Aug 2023 Chapter 11
+    emergence and its FY2025 10-Q (CIK 0000028823).
+
+    IMPORTANT CORRECTION from earlier research: Diebold's PRE-bankruptcy
+    capital structure (LIBOR/EURIBOR term loans, described in comments
+    further down near the covenant function) was entirely extinguished at
+    emergence - it is NOT still outstanding, so it is deliberately NOT
+    seeded here. Mixing pre- and post-restructuring tranches into the same
+    "current capital structure" would double-count debt that no longer
+    exists. Only the real, current, post-emergence structure is seeded.
     """
     conn.execute("DELETE FROM debt_tranches WHERE company_id = ?", (company_id,))
 
     tranches = [
         {
-            "tranche_name": "2022 Term Loan A Facility",
+            "tranche_name": "Exit Term Loan Facility",
             "tranche_type": "term_loan",
             "rate_type": "floating",
-            "reference_rate": "LIBOR",
-            "spread_bps": 425,  # LIBOR + 4.25%
-            "rate_floor_pct": None,
+            "reference_rate": "SOFR",
+            "spread_bps": 750,  # confirmed: SOFR + 7.50%
+            "rate_floor_pct": 0.0,  # standard market convention post-LIBOR - verify exact figure in credit agreement
             "fixed_rate_pct": None,
-            "original_balance": None,  # not clearly isolated in the extracted table - verify in filing
-            "as_of_date": "2021-06-30",
-            "maturity_date": None,  # disclosed as "3 years" from a 2020 amendment - verify exact date
+            "original_balance": 1_250_000_000,  # confirmed: $1.25B DIP converted to Exit Facility at emergence
+            "as_of_date": "2023-08-11",  # plan effective date
+            "maturity_date": "2028-08-11",  # 5-year term from effective date, per law firm summaries
             "seniority_rank": 1,
-            "source_accession": "SEC 10-Q filed re: quarter ended Jun 30 2021, CIK 0000028823",
-        },
-        {
-            "tranche_name": "Term Loan B (USD)",
-            "tranche_type": "term_loan",
-            "rate_type": "floating",
-            "reference_rate": "LIBOR",
-            "spread_bps": 275,  # LIBOR + 2.75%
-            "rate_floor_pct": None,
-            "fixed_rate_pct": None,
-            "original_balance": 381_000_000,  # balance as of Dec 31, 2021 per FY2022 10-K
-            "as_of_date": "2021-12-31",
-            "maturity_date": None,
-            "seniority_rank": 1,
-            "source_accession": "SEC 10-K FY2022, CIK 0000028823 (balance fully repaid by Dec 2022)",
-        },
-        {
-            "tranche_name": "Term Loan B (EUR)",
-            "tranche_type": "term_loan",
-            "rate_type": "floating",
-            "reference_rate": "EURIBOR",
-            "spread_bps": 300,  # EURIBOR + 3.00%
-            "rate_floor_pct": None,
-            "fixed_rate_pct": None,
-            "original_balance": 375_600_000,  # balance as of Dec 31, 2021 per FY2022 10-K
-            "as_of_date": "2021-12-31",
-            "maturity_date": None,
-            "seniority_rank": 1,
-            "source_accession": "SEC 10-K FY2022, CIK 0000028823 (balance fully repaid by Dec 2022)",
-        },
-        {
-            "tranche_name": "2025 New Term Loan B Facility (USD)",
-            "tranche_type": "term_loan",
-            "rate_type": "floating",
-            "reference_rate": "SOFR",  # post-LIBOR transition facility - confirm exact reference rate/spread in filing
-            "spread_bps": None,  # not isolated in extracted table - verify in filing text
-            "rate_floor_pct": None,
-            "fixed_rate_pct": None,
-            "original_balance": 529_500_000,  # balance as of Dec 31, 2022 per FY2023 10-Q
-            "as_of_date": "2022-12-31",
-            "maturity_date": None,
-            "seniority_rank": 1,
-            "source_accession": "SEC 10-Q filed re: quarter ended Jun 30 2023, CIK 0000028823",
-        },
-        {
-            "tranche_name": "2026 2L Notes",
-            "tranche_type": "sub_notes",
-            "rate_type": "fixed",
-            "reference_rate": None,
-            "spread_bps": None,
-            "rate_floor_pct": None,
-            "fixed_rate_pct": None,  # coupon not isolated in extracted table - verify in filing
-            "original_balance": 333_600_000,
-            "as_of_date": "2022-12-31",
-            "maturity_date": "2026-01-01",  # approximate from name - verify exact date
-            "seniority_rank": 2,
-            "source_accession": "SEC 10-Q filed re: quarter ended Jun 30 2023, CIK 0000028823",
+            "source_accession": "Jones Day / Loyens & Loeff / Davis Polk deal summaries re: Aug 2023 "
+                                 "emergence; DBD 8-K filed Aug 11 2023, CIK 0000028823",
         },
     ]
 
@@ -151,13 +104,27 @@ def seed_diebold_debt_tranches(conn, company_id):
 
 def seed_diebold_covenants(conn, company_id):
     """
-    Real disclosed covenant step schedule from Diebold's FY2021 10-Q. This
-    is a genuine "amend and extend" style covenant relief schedule - exactly
-    the mechanic your simulation engine needs to test against.
+    HISTORICAL covenant schedule from Diebold's PRE-bankruptcy credit
+    agreement (disclosed in its FY2021 10-Q, back when it still carried
+    LIBOR/EURIBOR term loans - see the correction note in
+    seed_diebold_debt_tranches above). This is a genuine "amend and
+    extend" style covenant relief schedule: lenders progressively loosened
+    then re-tightened the rules as a first response to distress.
+
+    All rows are given an expiry_date of 2023-06-01 (the Chapter 11 filing
+    date) because this entire credit agreement - covenants included - was
+    extinguished at emergence two months later. The real story arc: this
+    covenant relief mechanism was tried first, proved insufficient, and
+    the company proceeded to a full debt-for-equity Chapter 11
+    restructuring instead. The new Exit Term Loan Facility that replaced
+    it was deliberately structured covenant-lite (no financial maintenance
+    covenants at all) - so there is intentionally no "current" covenant
+    row for Diebold below this point. That absence is itself a real,
+    meaningful finding, not a data gap.
 
     Note: the source XBRL table had some ambiguous column alignment between
-    "current" and "subsequent event" (i.e. forward-scheduled) values - the
-    dates below are my best reconstruction. Verify against the actual filed
+    "current" and "subsequent event" (forward-scheduled) values - the
+    dates below are a best reconstruction. Verify against the actual filed
     credit agreement amendment before treating these as exact.
     """
     conn.execute("DELETE FROM covenant_terms WHERE company_id = ?", (company_id,))
@@ -166,12 +133,12 @@ def seed_diebold_covenants(conn, company_id):
         # Interest coverage ratio (minimum) - stepping UP over time (less lenient)
         {"covenant_type": "interest_coverage", "threshold_value": 1.5, "effective_date": "2021-06-30", "expiry_date": "2021-12-30"},
         {"covenant_type": "interest_coverage", "threshold_value": 1.625, "effective_date": "2021-12-31", "expiry_date": "2022-09-29"},
-        {"covenant_type": "interest_coverage", "threshold_value": 1.75, "effective_date": "2022-09-30", "expiry_date": None},
+        {"covenant_type": "interest_coverage", "threshold_value": 1.75, "effective_date": "2022-09-30", "expiry_date": "2023-06-01"},
         # Leverage ratio (maximum) - stepping DOWN over time (less lenient)
         {"covenant_type": "leverage_ratio", "threshold_value": 6.0, "effective_date": "2021-06-30", "expiry_date": "2021-12-30"},
         {"covenant_type": "leverage_ratio", "threshold_value": 5.75, "effective_date": "2021-12-31", "expiry_date": "2022-09-29"},
         {"covenant_type": "leverage_ratio", "threshold_value": 5.5, "effective_date": "2022-09-30", "expiry_date": "2022-12-30"},
-        {"covenant_type": "leverage_ratio", "threshold_value": 5.25, "effective_date": "2022-12-31", "expiry_date": None},
+        {"covenant_type": "leverage_ratio", "threshold_value": 5.25, "effective_date": "2022-12-31", "expiry_date": "2023-06-01"},
     ]
 
     for c in covenants:
