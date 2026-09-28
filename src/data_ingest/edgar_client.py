@@ -109,6 +109,7 @@ def extract_concept_series(company_facts: dict, concept: str, taxonomy: str = "u
             records.append(
                 {
                     "unit": unit_type,
+                    "start": e.get("start"),
                     "end": e.get("end"),
                     "val": e.get("val"),
                     "form": e.get("form"),

@@ -33,6 +33,27 @@ def get_latest_rate(conn, series_code):
     return row[0] if row else None
 
 
+def get_total_debt_balance(conn: sqlite3.Connection, ticker: str):
+    """
+    Sums the outstanding principal balance across every tranche with a
+    confirmed balance, regardless of whether it's floating or fixed rate -
+    for a leverage ratio, ALL debt counts, not just the floating-rate piece.
+    Returns (total, skipped) so gaps are visible, same pattern as the
+    interest function above.
+    """
+    tranches = get_company_tranches(conn, ticker)
+    total = 0.0
+    skipped = []
+
+    for t in tranches:
+        if t["original_balance"] is None:
+            skipped.append((t["tranche_name"], "balance not confirmed in our research"))
+            continue
+        total += t["original_balance"]
+
+    return total, skipped
+
+
 def total_quarterly_interest(conn: sqlite3.Connection, ticker: str):
     """
     Sums quarterly interest across every confirmed tranche for a company,
