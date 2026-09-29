@@ -4,14 +4,22 @@ Phase 4, illustrative piece: does the simulated breach-probability feature
 non-distressed companies better than static leverage/coverage ratios
 alone?
 
-DELIBERATELY NOT a trained classifier with an accuracy number: with only
-4 companies, even Leave-One-Out CV produces an "accuracy" that can only
-land on 0%, 25%, 50%, 75%, or 100% - a single flipped prediction swings
-the whole figure by 25 points. Reporting that as if it were a real,
-stable metric would be worse than not reporting anything - a classic
-case of false precision. This is a qualitative, honest look at the raw
-numbers instead: does the feature actually separate the two real classes
-we have, looking directly at the values?
+Extended from the original n=4 to n=6 with the addition of Charter
+Communications and American Airlines (real tranche-level data added via
+extend_deep_research.py's decomposition approach). Still explicitly NOT
+a trained classifier with a formal accuracy number - n=6 remains far too
+small for that. This is a qualitative, honest look at the raw numbers:
+does each feature actually separate the two real classes we have?
+
+IMPORTANT CAVEAT surfaced by adding AAL: its simulated breach probability
+came out at 100% (its real coverage is already below the 2.0x threshold
+TODAY, before any rate stress), yet American Airlines has not actually
+defaulted. This is a genuine limitation of applying one uniform 2.0x
+threshold across different sectors - airlines commonly operate, and
+successfully secure financing, at structurally lower coverage levels
+than other industries. AAL's "100% breach" signals a threshold mismatch,
+not a real distress prediction, and this piece states that plainly
+rather than hiding an inconvenient result.
 
 Uses the deep tranche-research figures from Phase 2/3 (not the
 standardized ml_dataset figures from the broader 28-company set) since
@@ -24,6 +32,8 @@ DATA = [
     {"ticker": "BHC", "is_distressed": 0, "leverage": 3.00, "coverage": 3.50, "breach_prob": 0.0},
     {"ticker": "CYH", "is_distressed": 0, "leverage": 1.57, "coverage": 6.92, "breach_prob": 0.0},
     {"ticker": "PRTYQ", "is_distressed": 1, "leverage": 11.48, "coverage": 1.00, "breach_prob": 100.0},
+    {"ticker": "CHTR", "is_distressed": 0, "leverage": 4.36, "coverage": 4.18, "breach_prob": 0.0},
+    {"ticker": "AAL", "is_distressed": 0, "leverage": 7.71, "coverage": 1.71, "breach_prob": 100.0},
 ]
 
 if __name__ == "__main__":
@@ -35,26 +45,28 @@ if __name__ == "__main__":
               f"{d['breach_prob']:>13.1f}%")
 
     print()
-    print("QUALITATIVE READ (n=4 - too small for a formal accuracy metric; this is a direct")
-    print("look at whether each feature actually separates the two real outcomes we have):")
+    print("QUALITATIVE READ (n=6 - still too small for a formal accuracy metric; this is a")
+    print("direct look at whether each feature separates the real outcomes we have):")
     print()
-    print("STATIC RATIOS: PRTYQ (11.48x / 1.00x) stands out clearly. But DBD (3.38x / 2.60x)")
-    print("sits comfortably between BHC and CYH's healthy-looking numbers - static ratios alone")
-    print("do NOT separate DBD from the non-distressed group. That's not a flaw in the ratios -")
-    print("it's because DBD's CURRENT numbers genuinely are healthy; its restructuring worked.")
+    print("STATIC RATIOS: PRTYQ and AAL both show real weakness (high leverage or low")
+    print("coverage), but AAL has NOT defaulted - a reminder that static ratios alone don't")
+    print("map cleanly onto outcomes even before adding simulation into the picture.")
     print()
-    print("BREACH PROBABILITY: PRTYQ's 100% is unambiguous and mechanism-grounded, not just a")
-    print("high ratio - it's the direct output of simulating real debt terms across calibrated")
-    print("future rate paths. But DBD still reads as low-risk (0.8%), same as BHC and CYH -")
-    print("the simulation doesn't fix DBD's case either, for the same honest reason: today's")
-    print("real risk IS low. Both approaches agree on DBD precisely because both are looking")
-    print("at DBD's genuinely recovered current state, not its resolved past.")
+    print("BREACH PROBABILITY: correctly flags PRTYQ (100%, and it did fail) and correctly")
+    print("clears BHC/CYH/CHTR (0%, all healthy, none have defaulted). DBD sits low-but-real")
+    print("at 0.8%, consistent with its genuinely recovered state. AAL's 100% is the one")
+    print("honest miss: its real coverage is ALREADY below our 2.0x threshold today, before")
+    print("any simulated rate stress at all - this is a THRESHOLD problem, not a prediction")
+    print("failure. Airlines routinely operate, and successfully finance themselves, at")
+    print("structurally lower coverage levels than other sectors (aircraft-secured EETC")
+    print("financing conventions differ from a typical corporate credit agreement). A single")
+    print("uniform 2.0x cutoff doesn't fit every industry - a real, stated limitation of this")
+    print("simplified approach, not something to paper over.")
     print()
-    print("THE REAL DIFFERENTIATOR: for PRTYQ specifically, the simulated feature converts an")
-    print("ambiguous static picture (high leverage, weak coverage - concerning, but not obviously")
-    print("'this will fail') into a stark, actionable signal (100% breach probability under")
-    print("calibrated real rate uncertainty) - because it models the underlying mechanism")
-    print("directly, rather than comparing one snapshot to a historical average. That is a real,")
-    print("meaningful advantage, but it's a claim about ONE company's clarity, not a validated")
-    print("population-level classifier result - n=4 cannot support the latter, and this piece")
-    print("does not pretend otherwise.")
+    print("THE REAL DIFFERENTIATOR REMAINS: for PRTYQ specifically, the simulated feature")
+    print("converts an ambiguous static picture into a stark, mechanism-grounded signal that")
+    print("actually matched the real outcome. That's a genuine, specific advantage - but n=6")
+    print("still cannot support a validated population-level classifier claim, and sector-")
+    print("specific threshold calibration (not attempted here) would be needed before this")
+    print("approach could fairly be applied across industries as different as airlines and")
+    print("cable operators.")
