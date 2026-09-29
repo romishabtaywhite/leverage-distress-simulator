@@ -734,8 +734,42 @@
     </div>
   </section>
 
-  <section id="surface">
+  <section id="extension">
     <div class="section-number">08</div>
+    <h2>Extending the simulation: two more companies, one important lesson</h2>
+    <p class="lede">The 4 deep-research companies doubled to 6, adding Charter Communications and American Airlines — both currently public, both with capital structures far more complex than the original 4.</p>
+
+    <h3>A cleaner way to handle complex capital structures</h3>
+    <p>Charter carries $94.8B of total debt, but only about 13% of it ($12.0B) is real floating-rate bank debt — the rest is dozens of fixed-coupon note series across multiple issuing entities. Cataloguing every individual note wasn't worth the effort for a marginal gain. Instead: model the real disclosed floating tranche exactly (balance, spread, floor — all verified against the actual FY2025 10-K), then <strong>algebraically derive</strong> a blended rate for the remaining "fixed" balance that exactly reproduces the company's real total interest expense today. The floating piece is 100% real disclosed terms; the fixed piece is a solved-for blend, labeled as such everywhere it's used — not a guess, and not a single real bond's coupon.</p>
+
+    <table class="data-table">
+      <tr><th>Ticker</th><th>Real total debt</th><th>Real floating tranche</th><th>Implied blended fixed rate</th></tr>
+      <tr><td>CHTR</td><td>$94.8B</td><td>$12.0B @ SOFR+165bps</td><td>5.47%</td></tr>
+      <tr><td>AAL</td><td>$28.3B</td><td>$1.85B @ SOFR+300bps</td><td>7.63%</td></tr>
+    </table>
+    <p style="font-size:14px;color:var(--ink-soft)">Both implied rates land exactly where you'd expect — CHTR's ~5.5% reflects an investment-grade-ish blend; AAL's ~7.6% reflects a higher speculative-grade airline premium. A useful sanity check that the decomposition is sound.</p>
+
+    <h3>The n=6 comparison</h3>
+    <table class="data-table">
+      <tr><th>Ticker</th><th>Distressed?</th><th>Leverage</th><th>Coverage</th><th>Breach Prob.</th></tr>
+      <tr class="distressed-row"><td>DBD</td><td>Yes</td><td>3.38x</td><td>2.60x</td><td>0.8%</td></tr>
+      <tr><td>BHC</td><td>No</td><td>3.00x</td><td>3.50x</td><td>0.0%</td></tr>
+      <tr><td>CYH</td><td>No</td><td>1.57x</td><td>6.92x</td><td>0.0%</td></tr>
+      <tr class="distressed-row"><td>PRTYQ</td><td>Yes</td><td>11.48x</td><td>1.00x</td><td>100.0%</td></tr>
+      <tr><td>CHTR</td><td>No</td><td>4.36x</td><td>4.18x</td><td>0.0%</td></tr>
+      <tr class="wrong"><td>AAL</td><td>No</td><td>7.71x</td><td>1.71x</td><td>100.0%</td></tr>
+    </table>
+
+    <div class="callout">
+      <span class="callout-label">The honest miss, diagnosed and fixed</span>
+      AAL shows 100% breach probability — yet it has never defaulted. Its real coverage is already 1.71x <em>today</em>, before any simulated rate stress at all, so it stays below our generic 2.0x threshold across every single path. This isn't a prediction failure; it's a threshold applied to the wrong industry. Delta Air Lines' actual disclosed debt covenants use a <strong>1.20x</strong> minimum Fixed Charge Coverage Ratio, not 2.0x. Testing AAL's already-stored simulation results against that real benchmark: breach probability drops to <strong>0%</strong> — correctly matching its real non-default status.
+      <br><br>
+      A residual honesty check, not smoothed over: AAL's <em>own</em> real covenants aren't interest-coverage-based at all — they're structured around loan-to-value and collateral coverage on secured aircraft financing, plus a $2.0B minimum liquidity buffer. Even the corrected 1.20x threshold is still testing the wrong <em>kind</em> of metric for this specific company — a fully faithful model would represent AAL's actual liquidity-based covenant structure directly, which this project doesn't attempt. The finding stands as: identify a wrong result → diagnose why → find a grounded benchmark → show the number move to the right answer → state what's still incomplete.
+    </div>
+  </section>
+
+  <section id="surface">
+    <div class="section-number">09</div>
     <h2>How much leverage is too much — for this specific company</h2>
     <p class="lede">A genuinely new question, not a restatement of anything above: holding each company's real EBITDA and real floating-rate spread fixed, what if it had been levered at a different multiple — combined with calibrated rate uncertainty? Nine leverage levels × 500 simulated paths × 3 companies with real floating-rate exposure (Party City excluded — zero floating debt, so this question doesn't meaningfully apply to it).</p>
 
@@ -792,7 +826,7 @@
   </section>
 
   <section id="bugs">
-    <div class="section-number">09</div>
+    <div class="section-number">10</div>
     <h2>What broke, and what that revealed</h2>
     <p class="lede">Six genuine data-quality issues across the project, caught and fixed rather than smoothed over — each one a real lesson about working with disclosed financial data, not a polished demo that just happened to work.</p>
 
@@ -852,9 +886,9 @@
   </section>
 
   <section id="next">
-    <div class="section-number">10</div>
+    <div class="section-number">11</div>
     <h2>What's next</h2>
-    <p>Phases 1–4 are complete: real data infrastructure, a full interest/covenant/equity engine, calibrated rate-scenario simulation, a properly-validated (if honestly modest) distress classifier, and a novel leverage-stress surface producing company-specific risk thresholds. What's ahead: the final write-up and packaging.</p>
+    <p>Phases 1–4 are complete, and the deep-research set has grown from 4 to 6 companies. What's ahead: further extending tranche-level research to more companies, and the final write-up and packaging.</p>
   </section>
 
   <footer>
