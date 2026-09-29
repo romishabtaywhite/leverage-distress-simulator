@@ -101,7 +101,20 @@ CREATE INDEX IF NOT EXISTS idx_tranches_company ON debt_tranches(company_id);
 CREATE INDEX IF NOT EXISTS idx_facts_company ON financial_facts(company_id, concept);
 CREATE INDEX IF NOT EXISTS idx_results_company_scenario ON simulation_results(company_id, scenario_id);
 
--- Phase 4: broader cross-sectional dataset for the ML distress classifier.
+-- Phase 4b: leverage x rate-stress breach-probability surface. For a
+-- company's REAL EBITDA and REAL floating-rate spread, varies HYPOTHETICAL
+-- leverage multiples combined with calibrated stochastic rate paths -
+-- answers "how much leverage would this specific company's real cash
+-- flows actually tolerate under real rate uncertainty," not just "what is
+-- its leverage today."
+CREATE TABLE IF NOT EXISTS leverage_stress_surface (
+    ticker              TEXT NOT NULL,
+    leverage_multiple    REAL NOT NULL,
+    breach_probability   REAL NOT NULL,
+    n_paths              INTEGER NOT NULL,
+    horizon_quarters     INTEGER NOT NULL,
+    PRIMARY KEY (ticker, leverage_multiple)
+);
 -- Lighter-weight than the tables above - one row per company, static
 -- (not time-series) leverage/coverage figures, used purely to have a
 -- large enough labeled sample to train and validate a real classifier.
