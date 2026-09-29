@@ -54,11 +54,14 @@ def get_total_debt_balance(conn: sqlite3.Connection, ticker: str):
     return total, skipped
 
 
-def total_quarterly_interest(conn: sqlite3.Connection, ticker: str):
+def total_quarterly_interest(conn: sqlite3.Connection, ticker: str, sofr_override: float = None):
     """
-    Sums quarterly interest across every confirmed tranche for a company,
-    using today's latest known rates. Returns (total, details, skipped) so
-    callers can inspect exactly what was included and what wasn't.
+    Sums quarterly interest across every confirmed tranche for a company.
+
+    By default uses today's REAL latest known SOFR rate. Pass sofr_override
+    to instead use a hypothetical rate - this is what makes scenario
+    testing possible: "what would this company's interest bill be if SOFR
+    were X%?" rather than always answering only for today's actual rate.
     """
     tranches = get_company_tranches(conn, ticker)
     total = 0.0
@@ -82,11 +85,11 @@ def total_quarterly_interest(conn: sqlite3.Connection, ticker: str):
                 skipped.append((name, f"reference rate is {t['reference_rate']}, "
                                        f"and we've only loaded SOFR history so far"))
                 continue
-            latest_rate = get_latest_rate(conn, "SOFR")
+            rate_to_use = sofr_override if sofr_override is not None else get_latest_rate(conn, "SOFR")
             r = floating_rate_interest(
                 balance=t["original_balance"],
                 spread_bps=t["spread_bps"],
-                reference_rate_pct=latest_rate,
+                reference_rate_pct=rate_to_use,
                 floor_pct=t["rate_floor_pct"],
             )
         else:
