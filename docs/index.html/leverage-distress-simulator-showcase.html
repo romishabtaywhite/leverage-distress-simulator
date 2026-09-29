@@ -336,11 +336,101 @@
   }
   footer a { text-decoration: underline; }
 
+  /* ---------- Data table (ML predictions, etc) ---------- */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    margin: 20px 0;
+  }
+  .data-table th {
+    text-align: left;
+    font-family: "Source Serif 4", serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+    padding: 8px 10px;
+  }
+  .data-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .data-table tr.wrong td { color: var(--brick); }
+  .data-table tr.distressed-row td:first-child { font-weight: 600; }
+  .data-table .tag {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: var(--brick);
+    color: #fff;
+    margin-left: 6px;
+  }
+
+  /* ---------- Callout boxes ---------- */
+  .callout {
+    border-left: 3px solid var(--gold);
+    background: var(--paper-raised);
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 16px;
+  }
+  .callout .callout-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--gold);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .callout.rejected {
+    border-left-color: var(--ink-soft);
+  }
+  .callout.rejected .callout-label { color: var(--ink-soft); }
+
+  /* ---------- Multi-line chart legend ---------- */
+  .chart-legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    margin-top: 10px;
+    color: var(--ink-soft);
+  }
+  .chart-legend .swatch {
+    display: inline-block;
+    width: 18px;
+    height: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* ---------- Breakeven cards ---------- */
+  .breakeven-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .breakeven-card {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    padding: 16px 18px;
+  }
+  .breakeven-card .bticker { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+  .breakeven-card .brow { display: flex; justify-content: space-between; font-family: "IBM Plex Mono", monospace; font-size: 14px; margin-bottom: 4px; }
+  .breakeven-card .bhead { color: var(--ink-soft); }
+  .breakeven-card .margin { color: var(--forest); font-weight: 600; }
+
   @media (max-width: 560px) {
     body { font-size: 17px; }
     .tearsheet { flex-wrap: wrap; }
     .tearsheet div { flex: 1 1 50%; border-bottom: 1px solid var(--rule); }
     .before-after { grid-template-columns: 1fr; }
+    .data-table { font-size: 12px; }
   }
 </style>
 </head>
@@ -593,10 +683,118 @@
     </div>
   </section>
 
-  <section id="bugs">
+  <section id="classifier">
     <div class="section-number">07</div>
+    <h2>Can any of this predict distress?</h2>
+    <p class="lede">The whole point of the simulated breach-probability feature is to beat static ratios at predicting real-world distress. Testing that honestly meant confronting a hard truth first: four labeled companies isn't enough to train anything meaningful.</p>
+
+    <p>A classifier "trained" on 4 examples doesn't learn a pattern — it memorizes 4 points. So before building anything, the dataset had to grow. 24 more real companies were researched — a mix of well-documented Chapter 11 filings (Hertz, WeWork, Rite Aid, Big Lots, Joann, 23andMe, Chesapeake Energy, Frontier Communications, Avaya, Revlon, Yellow Corporation, J.C. Penney) and heavily-levered survivors that haven't defaulted (Charter, Carnival, American Airlines, United, Occidental, Clear Channel Outdoor, Avantor, Herbalife, Kraft Heinz, Restaurant Brands, EchoStar, Anywhere Real Estate) — pulled via standardized SEC EDGAR tags rather than the deep tranche-level research done for the four core cases.</p>
+
+    <p>Of 28 companies attempted, <strong>14 came through with complete, trustworthy data</strong> — 5 distressed, 9 not. The rest were excluded for real, stated reasons: several distressed companies had genuinely negative EBITDA in their bankruptcy year (a real signal, not a gap to paper over), a few used debt-tag conventions this pipeline couldn't resolve, and one (J.C. Penney) simply predates this API's coverage entirely.</p>
+
+    <h3>The model, evaluated honestly</h3>
+    <p>Logistic regression on two features (leverage ratio, interest coverage), evaluated with Leave-One-Out Cross-Validation — the correct technique at this sample size, since a normal train/test split would leave too few points on either side to mean anything.</p>
+
+    <table class="data-table">
+      <tr><th>Ticker</th><th>Actual</th><th>Predicted</th><th>P(distressed)</th></tr>
+      <tr class="distressed-row wrong"><td>DBD</td><td>distressed</td><td>not</td><td>26.2%</td></tr>
+      <tr><td>BHC</td><td>not</td><td>distressed</td><td>55.4%</td></tr>
+      <tr><td>CYH</td><td>not</td><td>not</td><td>48.3%</td></tr>
+      <tr class="distressed-row wrong"><td>PRTYQ</td><td>distressed</td><td>not</td><td>0.7%</td></tr>
+      <tr class="distressed-row"><td>REV</td><td>distressed</td><td>distressed</td><td>50.1%</td></tr>
+      <tr class="distressed-row"><td>FYBR</td><td>distressed</td><td>distressed</td><td>51.1%</td></tr>
+      <tr class="distressed-row"><td>YELLQ</td><td>distressed</td><td>distressed</td><td>50.5%</td></tr>
+      <tr><td>CHTR</td><td>not</td><td>not</td><td>42.9%</td></tr>
+      <tr><td>CCL</td><td>not</td><td>not</td><td>45.3%</td></tr>
+      <tr class="wrong"><td>AAL</td><td>not</td><td>distressed</td><td>58.1%</td></tr>
+      <tr><td>UAL</td><td>not</td><td>not</td><td>12.4%</td></tr>
+      <tr class="wrong"><td>CCO</td><td>not</td><td>distressed</td><td>65.7%</td></tr>
+      <tr><td>AVTR</td><td>not</td><td>not</td><td>46.5%</td></tr>
+      <tr><td>HLF</td><td>not</td><td>not</td><td>48.8%</td></tr>
+    </table>
+
+    <div class="metric-grid mono" style="margin-bottom:8px">
+      <div><div class="label" style="font-size:13px;color:var(--ink-soft)">LOOCV accuracy</div><div class="value" style="font-size:20px">64.3%</div></div>
+      <div><div class="label" style="font-size:13px;color:var(--ink-soft)">Majority-class baseline</div><div class="value" style="font-size:20px">64.3%</div></div>
+      <div><div class="label" style="font-size:13px;color:var(--ink-soft)">ROC-AUC</div><div class="value" style="font-size:20px;color:var(--brick)">0.422</div></div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-label">The honest finding</span>
+      The model's accuracy exactly matches "always guess the majority class" — it hasn't demonstrated it beats the trivial baseline. Its AUC of <strong>0.422 is below 0.5</strong>, meaning its predicted probabilities actually rank distressed and non-distressed companies <em>worse</em> than random guessing, driven specifically by <strong>PRTYQ</strong> — at 20.55x leverage, by far the most extreme point in the dataset, the model predicted only a 0.7% chance of distress. A logistic regression fit on 13 points ranging roughly 2.5x–10.5x has no reliable way to extrapolate to something nearly double the next-highest value: a textbook small-sample <strong>extrapolation failure</strong>, not a bug.
+      <br><br>
+      A permutation test (2,000 random label reshuffles, full LOOCV rerun each time) confirms it statistically: <strong>27.8% of random reshuffles matched or beat the real accuracy (p=0.278)</strong>, and <strong>57.1% matched or beat the real AUC (p=0.571)</strong>. By the conventional bar, this result is <strong>not distinguishable from chance</strong> at n=14. That's not a failure to bury — it's a rigorous, honestly-earned finding that directly makes the case for simulation-based features over correlational curve-fitting on a small sample.
+    </div>
+
+    <p>DBD's miss tells a different story: its current ratios (3.38x leverage, 2.60x coverage) look genuinely healthy — because they are, today, after a real restructuring fixed the problem. The label "distressed" reflects a resolved <em>past</em> event; the features describe a recovered <em>present</em>. That mismatch isn't a modeling error, it's a structural limit of using single-snapshot ratios against historical labels.</p>
+
+    <div class="callout rejected">
+      <span class="callout-label">Considered and rejected</span>
+      The tempting next step would be generating thousands of synthetic training rows from the 500-path stochastic simulation. Rejected: within one company's simulation, leverage and spread are held fixed — only the rate varies — so "coverage ratio" there is just a deterministic arithmetic function of the rate we already coded explicitly (<span class="mono">interest = balance × (rate + spread)</span>). Training a flexible model to rediscover a formula it was given isn't learning anything new; it's expensive curve-fitting on our own arithmetic. Better to not do it, and better still to say so.
+    </div>
+  </section>
+
+  <section id="surface">
+    <div class="section-number">08</div>
+    <h2>How much leverage is too much — for this specific company</h2>
+    <p class="lede">A genuinely new question, not a restatement of anything above: holding each company's real EBITDA and real floating-rate spread fixed, what if it had been levered at a different multiple — combined with calibrated rate uncertainty? Nine leverage levels × 500 simulated paths × 3 companies with real floating-rate exposure (Party City excluded — zero floating debt, so this question doesn't meaningfully apply to it).</p>
+
+    <div class="chart-wrap">
+      <svg viewBox="0 0 660 250" width="100%" role="img" aria-label="Breach probability versus hypothetical leverage multiple for DBD, BHC, and CYH">
+        <line x1="50" y1="220" x2="610" y2="220" stroke="var(--rule)" stroke-width="1"/>
+        <line x1="50" y1="20" x2="50" y2="220" stroke="var(--rule)" stroke-width="1"/>
+        <line x1="50" y1="120" x2="610" y2="120" stroke="var(--rule)" stroke-width="1" stroke-dasharray="3,4"/>
+        <text x="615" y="124" class="mono" font-size="11" fill="var(--ink-soft)">50%</text>
+
+        <polyline points="50,220 120,220 190,174.8 260,56 330,24 400,20 470,20 540,20 610,20"
+          fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linejoin="round"/>
+        <polyline points="50,220 120,220 190,210.4 260,111.2 330,42 400,24 470,20 540,20 610,20"
+          fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6,4" stroke-linejoin="round"/>
+        <polyline points="50,220 120,220 190,220 260,219.6 330,211.2 400,180.8 470,137.6 540,100.4 610,74.8"
+          fill="none" stroke="var(--ink-soft)" stroke-width="2" stroke-dasharray="2,3" stroke-linejoin="round"/>
+
+        <text x="50" y="238" class="mono" font-size="11" fill="var(--ink-soft)">2x</text>
+        <text x="610" y="238" class="mono" font-size="11" fill="var(--ink-soft)" text-anchor="end">10x</text>
+        <text x="330" y="238" class="mono" font-size="11" fill="var(--ink-soft)" text-anchor="middle">leverage multiple (× EBITDA)</text>
+        <text x="14" y="24" class="mono" font-size="11" fill="var(--ink-soft)">100%</text>
+        <text x="18" y="224" class="mono" font-size="11" fill="var(--ink-soft)">0%</text>
+      </svg>
+      <div class="chart-legend">
+        <span><span class="swatch" style="background:var(--gold)"></span>DBD</span>
+        <span><span class="swatch" style="background:var(--ink)"></span>BHC (dashed)</span>
+        <span><span class="swatch" style="background:var(--ink-soft)"></span>CYH (dotted)</span>
+      </div>
+    </div>
+    <p class="chart-caption">Each curve is shaped by that company's own real structure: DBD's 750bps spread makes it the steepest and most rate-sensitive; CYH's much smaller 200bps spread makes it structurally the most rate-insensitive of the three, barely moving until 7–8x.</p>
+
+    <div class="breakeven-grid">
+      <div class="breakeven-card">
+        <div class="bticker">DBD</div>
+        <div class="brow"><span class="bhead">Breakeven leverage</span><span>~4.5x</span></div>
+        <div class="brow"><span class="bhead">Real leverage today</span><span>3.38x</span></div>
+        <div class="brow"><span class="bhead">Headroom</span><span class="margin">+1.1 turns</span></div>
+      </div>
+      <div class="breakeven-card">
+        <div class="bticker">BHC</div>
+        <div class="brow"><span class="bhead">Breakeven leverage</span><span>~4.9x</span></div>
+        <div class="brow"><span class="bhead">Real leverage today</span><span>3.00x</span></div>
+        <div class="brow"><span class="bhead">Headroom</span><span class="margin">+1.9 turns</span></div>
+      </div>
+      <div class="breakeven-card">
+        <div class="bticker">CYH</div>
+        <div class="brow"><span class="bhead">Breakeven leverage</span><span>~8.5x</span></div>
+        <div class="brow"><span class="bhead">Real leverage today</span><span>1.57x*</span></div>
+        <div class="brow"><span class="bhead">Headroom</span><span class="margin">+6.9 turns*</span></div>
+      </div>
+    </div>
+    <p class="caveat" style="max-width:none">*CYH's real leverage here still reflects the Phase 2 understatement (only 3 of its disclosed tranches captured, against a real total closer to $11.4B) — the shape of its curve (structurally rate-insensitive due to a low 200bps spread) is a valid finding; this specific headroom figure is optimistic and shouldn't be quoted on its own.</p>
+    <p>Breakeven leverage is a genuinely company-specific number — it comes directly from a company's own real cash-generating capacity and real cost of debt, not a generic "6x is risky" industry rule of thumb. DBD and BHC, structurally similar in spread, land within half a turn of each other (~4.5x, ~4.9x); CYH's far lower spread pushes its threshold out to ~8.5x. That's the differentiator the whole project was built around, made concrete.</p>
+  </section>
+
+  <section id="bugs">
+    <div class="section-number">09</div>
     <h2>What broke, and what that revealed</h2>
-    <p class="lede">Three genuine data-quality issues, caught and fixed rather than smoothed over — each one a real lesson about working with disclosed financial data, not a polished demo that just happened to work.</p>
+    <p class="lede">Six genuine data-quality issues across the project, caught and fixed rather than smoothed over — each one a real lesson about working with disclosed financial data, not a polished demo that just happened to work.</p>
 
     <details class="bug">
       <summary>Fresh-start accounting created fake "annual" figures around Diebold's bankruptcy</summary>
@@ -624,12 +822,39 @@
         <div class="col after"><div class="label">After (specific tags first, generic tags only as fallback)</div>Add-back: $862.5M (matches the 10-K exactly)</div>
       </div>
     </details>
+
+    <details class="bug">
+      <summary>SEC's own ticker file quietly excludes delisted companies</summary>
+      <p style="margin-top:12px">SEC's ticker-to-CIK lookup only covers currently actively-traded tickers — the moment a company delists (goes private, gets acquired, liquidates), its ticker vanishes from that file even though its CIK and filings remain in EDGAR permanently. Since almost every genuinely distressed company eventually delists, this hit the distressed group hardest: 11 of 12 new distressed candidates failed to resolve on the first attempt.</p>
+      <div class="before-after">
+        <div class="col before"><div class="label">Before</div>2 of 10 complete rows were distressed (badly imbalanced)</div>
+        <div class="col after"><div class="label">After (CIKs hardcoded directly, verified via EDGAR filing search)</div>6 of 14 complete rows were distressed</div>
+      </div>
+    </details>
+
+    <details class="bug">
+      <summary>Charter's interest expense was tagged as a negative number</summary>
+      <p style="margin-top:12px">Some filers report the "InterestExpense" concept as negative (an income-statement sign convention), not a real negative interest cost. A strict <span class="mono">&gt; 0</span> check silently rejected a perfectly real figure, producing an unexplained "INCOMPLETE" result with no visible reason.</p>
+      <div class="before-after">
+        <div class="col before"><div class="label">Before</div>Raw value: -$5,188,000,000 → rejected, no reason shown</div>
+        <div class="col after"><div class="label">After (take absolute value; always show raw values if unexplained)</div>Leverage 4.36x, Coverage 4.18x</div>
+      </div>
+    </details>
+
+    <details class="bug">
+      <summary>A blindly-added "Other" tag produced an impossible 962x coverage ratio</summary>
+      <p style="margin-top:12px">Adding <span class="mono">InterestExpenseOther</span> as an equal alternative to the main interest expense tag let a tiny sub-component override the real total for one filer, since the code just picked whichever tag was most recently filed. No real company sustains 50x+ coverage — a plain sanity check catches this class of error even when the exact wrong tag can't be pinned down.</p>
+      <div class="before-after">
+        <div class="col before"><div class="label">Before</div>Coverage: 962.69x (silently accepted)</div>
+        <div class="col after"><div class="label">After ("Other" tags as last resort only, plus a plausibility check)</div>Excluded, with an honest "implausible value" reason shown</div>
+      </div>
+    </details>
   </section>
 
   <section id="next">
-    <div class="section-number">08</div>
+    <div class="section-number">10</div>
     <h2>What's next</h2>
-    <p>Phases 1–3 are complete: real data infrastructure, a full interest/covenant/equity engine, and calibrated rate-scenario simulation across all four companies. What's ahead: an ML classifier using these simulated breach-probability metrics as engineered features — rather than static leverage ratios alone — to predict distress, followed by the final write-up and packaging.</p>
+    <p>Phases 1–4 are complete: real data infrastructure, a full interest/covenant/equity engine, calibrated rate-scenario simulation, a properly-validated (if honestly modest) distress classifier, and a novel leverage-stress surface producing company-specific risk thresholds. What's ahead: the final write-up and packaging.</p>
   </section>
 
   <footer>
