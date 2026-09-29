@@ -439,7 +439,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <div class="kicker">An independent research project, still in progress.</div>
+    <div class="kicker">An independent research project.</div>
     <h1>Leveraged Finance Distress Simulator</h1>
     <p class="thesis">What actually happens to a company's covenants and equity value when the Federal Reserve raises rates — traced quarter by quarter through four real, disclosed capital structures, not a textbook model.</p>
 
@@ -885,14 +885,20 @@
     </details>
   </section>
 
-  <section id="next">
+  <section id="conclusion">
     <div class="section-number">11</div>
-    <h2>What's next</h2>
-    <p>Phases 1–4 are complete, and the deep-research set has grown from 4 to 6 companies. What's ahead: further extending tranche-level research to more companies, and the final write-up and packaging.</p>
+    <h2>What this actually showed</h2>
+    <p class="lede">Six real companies, one calibrated rate model, and a research question answered with more nuance than it started with.</p>
+
+    <p>The mechanism held up: floating-rate debt genuinely transmits rate-cycle risk into covenant headroom, and the size of that transmission is a real, measurable function of a company's own disclosed spread and leverage — not a generic industry assumption. Diebold's 750bps spread makes it structurally the most rate-sensitive survivor in this dataset; Party City's entirely fixed-rate structure meant its real collapse had nothing to do with rates at all. Both facts came directly out of the same engine, not two different stories bolted together.</p>
+
+    <p>The honest limits turned out to be just as informative as the successes. A classifier is only as good as its sample size — at n=14, ours is statistically indistinguishable from guessing the majority class, and saying so plainly is worth more than a flattering number would have been. A single distress threshold doesn't travel across industries — American Airlines' "100% breach probability" wasn't a forecast, it was a mismatch between a corporate covenant convention and an airline's actual risk framework, and finding the real benchmark that fixed it (Delta's disclosed 1.20x) mattered more than the original number ever did.</p>
+
+    <p>And the clearest result in the whole project remains the simplest one: Party City's coverage ratio sat at almost exactly 1.00x — no cushion at all — in <em>every single one</em> of 500 simulated futures, computed from real debt terms and a rate model calibrated to real history, weeks before the company actually collapsed. That's not a coincidence dressed up as insight. It's what happens when leverage, spreads, and rates are modeled as what they actually are, rather than summarized into a single static number.</p>
   </section>
 
   <footer>
-    This is a living document, updated as the project progresses through its remaining phases.<br>
+    Built end to end on real, public data — SEC EDGAR and FRED — with every data-quality issue documented rather than hidden.<br>
     Romi Shabtay White — <a href="https://github.com/romishabtaywhite/leverage-distress-simulator">GitHub repository</a>
   </footer>
 
