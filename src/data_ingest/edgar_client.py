@@ -126,7 +126,8 @@ def extract_concept_series(company_facts: dict, concept: str, taxonomy: str = "u
 # inconsistent about which exact tag they use, so check what's actually
 # present for each company_facts blob before assuming a tag is missing.
 CANDIDATE_TAGS = {
-    "interest_expense": ["InterestExpense", "InterestExpenseDebt", "InterestIncomeExpenseNet"],
+    "interest_expense": ["InterestExpense", "InterestExpenseDebt", "InterestIncomeExpenseNet",
+                          "InterestExpenseOther", "InterestAndDebtExpense"],
     "revenue": ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax"],
     "operating_income": ["OperatingIncomeLoss"],
     "depreciation_amortization": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"],
@@ -140,6 +141,7 @@ CANDIDATE_TAGS = {
     "impairment_other": ["AssetImpairmentCharges", "ImpairmentOfLongLivedAssetsHeldForUse"],
     "long_term_debt": ["LongTermDebtNoncurrent", "LongTermDebt"],
     "current_debt": ["LongTermDebtCurrent", "DebtCurrent"],
+    "total_debt_combined": ["DebtLongtermAndShorttermCombinedAmount", "DebtInstrumentCarryingAmount"],
 }
 
 

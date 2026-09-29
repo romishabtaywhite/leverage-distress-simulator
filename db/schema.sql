@@ -100,3 +100,21 @@ CREATE TABLE IF NOT EXISTS simulation_results (
 CREATE INDEX IF NOT EXISTS idx_tranches_company ON debt_tranches(company_id);
 CREATE INDEX IF NOT EXISTS idx_facts_company ON financial_facts(company_id, concept);
 CREATE INDEX IF NOT EXISTS idx_results_company_scenario ON simulation_results(company_id, scenario_id);
+
+-- Phase 4: broader cross-sectional dataset for the ML distress classifier.
+-- Lighter-weight than the tables above - one row per company, static
+-- (not time-series) leverage/coverage figures, used purely to have a
+-- large enough labeled sample to train and validate a real classifier.
+CREATE TABLE IF NOT EXISTS ml_dataset (
+    ticker                  TEXT PRIMARY KEY,
+    name                    TEXT,
+    is_distressed           INTEGER NOT NULL,
+    total_debt              REAL,
+    adjusted_ebitda         REAL,
+    interest_expense        REAL,
+    leverage_ratio          REAL,
+    interest_coverage_ratio REAL,
+    fiscal_year_end         TEXT,
+    data_complete           INTEGER DEFAULT 0,
+    notes                   TEXT
+);
