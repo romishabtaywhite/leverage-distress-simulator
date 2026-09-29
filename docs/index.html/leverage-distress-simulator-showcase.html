@@ -480,6 +480,29 @@
         <p>Running the engine across every real quarter since a company's current capital structure actually came into existence — not further back, since running a structure before it existed produces numbers that look real but aren't.</p>
       </div>
     </div>
+
+    <div class="timeline-item">
+      <div class="num">04</div>
+      <div>
+        <h3>Equity returns</h3>
+        <p>Enterprise Value = EBITDA × multiple; Equity Value = EV − Debt. Since debt stays fixed while EBITDA moves, all growth concentrates into the equity slice — Diebold's real 17.5% EBITDA growth became a 3x-amplified 51.9% equity return under an illustrative multiple. This amplification mechanism is the entire reason leverage exists in PE.</p>
+        <ul class="artifact-list">
+          <li>engine/equity.py — enterprise_value(), equity_value(), moic(), irr_approx()</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="num">05</div>
+      <div>
+        <h3>Rate scenarios (Phase 3)</h3>
+        <p>Deterministic shocks (±100 to +600bps) first, then a mean-reverting rate model calibrated directly from real historical SOFR via linear regression, simulated 500 times per company, 2 years ahead — turning "what happened" into "what could happen, and how likely."</p>
+        <ul class="artifact-list">
+          <li>engine/scenarios.py — calibrate_ou(), simulate_paths()</li>
+          <li>Results persisted to rate_scenarios / scenario_rate_paths / simulation_results tables</li>
+        </ul>
+      </div>
+    </div>
   </section>
 
   <section id="chart">
@@ -530,8 +553,48 @@
     </div>
   </section>
 
-  <section id="bugs">
+  <section id="scenarios">
     <div class="section-number">06</div>
+    <h2>From one history to many futures</h2>
+    <p class="lede">Historical replay shows what happened. Phase 3 asks what <em>could</em> happen: a mean-reverting rate model, calibrated directly from real historical SOFR data (kappa = 0.037/quarter, long-run average 4.19%, quarterly volatility 0.56pp), simulated 500 times, 2 years ahead — for every company at once.</p>
+
+    <div class="case-card">
+      <div class="metric-grid mono" style="grid-template-columns:repeat(4,1fr)">
+        <div><div class="label">Ticker</div></div>
+        <div><div class="label">Median coverage</div></div>
+        <div><div class="label">Range across paths</div></div>
+        <div><div class="label">P(coverage &lt; 2.0x)</div></div>
+      </div>
+      <div class="metric-grid mono" style="grid-template-columns:repeat(4,1fr);margin-top:2px">
+        <div><div class="value" style="font-size:17px">DBD</div></div>
+        <div><div class="value" style="font-size:17px">2.59x</div></div>
+        <div><div class="value" style="font-size:17px">2.027x</div></div>
+        <div><div class="value" style="font-size:17px">0.8%</div></div>
+      </div>
+      <div class="metric-grid mono" style="grid-template-columns:repeat(4,1fr)">
+        <div><div class="value" style="font-size:17px">BHC</div></div>
+        <div><div class="value" style="font-size:17px">3.50x</div></div>
+        <div><div class="value" style="font-size:17px">0.937x</div></div>
+        <div><div class="value" style="font-size:17px">0.0%</div></div>
+      </div>
+      <div class="metric-grid mono" style="grid-template-columns:repeat(4,1fr)">
+        <div><div class="value" style="font-size:17px">CYH</div></div>
+        <div><div class="value" style="font-size:17px">6.92x</div></div>
+        <div><div class="value" style="font-size:17px">2.022x</div></div>
+        <div><div class="value" style="font-size:17px">0.0%</div></div>
+      </div>
+      <div class="metric-grid mono" style="grid-template-columns:repeat(4,1fr)">
+        <div><div class="value" style="font-size:17px;color:var(--brick)">PRTYQ</div></div>
+        <div><div class="value" style="font-size:17px;color:var(--brick)">1.00x</div></div>
+        <div><div class="value" style="font-size:17px;color:var(--forest)">0.000x</div></div>
+        <div><div class="value" style="font-size:17px;color:var(--brick)">100.0%</div></div>
+      </div>
+      <div class="story" style="margin-top:18px">Party City's range across all 500 simulated futures is exactly <strong>0.000x</strong> — mathematically proving it has zero rate sensitivity, because both its tranches are fixed. Its coverage sits at 1.00x in every single path, not because of what rates do, but because it was already there. Diebold is the only survivor showing any real rate-driven tail risk at all (0.8% chance of breaching 2.0x within 2 years) — a direct, quantified consequence of holding 100% of its debt in one floating-rate facility.</div>
+    </div>
+  </section>
+
+  <section id="bugs">
+    <div class="section-number">07</div>
     <h2>What broke, and what that revealed</h2>
     <p class="lede">Three genuine data-quality issues, caught and fixed rather than smoothed over — each one a real lesson about working with disclosed financial data, not a polished demo that just happened to work.</p>
 
@@ -564,9 +627,9 @@
   </section>
 
   <section id="next">
-    <div class="section-number">07</div>
+    <div class="section-number">08</div>
     <h2>What's next</h2>
-    <p>Equity-return simulation across the historical rate path, then generalizing from "one real history" to many hypothetical rate scenarios — deterministic shocks and a calibrated stochastic model — before layering on the ML classifier that uses simulated stress signals as engineered features, rather than static ratios alone.</p>
+    <p>Phases 1–3 are complete: real data infrastructure, a full interest/covenant/equity engine, and calibrated rate-scenario simulation across all four companies. What's ahead: an ML classifier using these simulated breach-probability metrics as engineered features — rather than static leverage ratios alone — to predict distress, followed by the final write-up and packaging.</p>
   </section>
 
   <footer>
